@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title></title>
+
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width; initial-scale=1.0; user-scalable=no">
+
+    <style>
+        h1 { margin-bottom: 5px }
+        table { border-collapse: collapse; }
+        td, th { border: 1px solid #000; padding: 0 5px }
+        p { margin: 5px 0 5px 0; }
+
+        #inputBox { width: 300px; }
+        #variablesBox { width: 317px; }
+
+        .keyboard { padding: 5px 0 }
+        .btn { width: 25px; height: 25px; border: 1px solid #000; text-align: center; display: table-cell; vertical-align: middle; cursor: pointer; border-radius: 2px; padding: 2px; }
+        .btn:hover { background: #fefeff; border-top: 2px solid #000; border-bottom: 0 }
+        .ltl-to-buchi-calculator { display: table; width: 100% }
+        .ltl-to-buchi-calculator-controls { display: table-cell; vertical-align: top; width: 50% }
+        .ltl-to-buchi-calculator-view { display: table-cell; vertical-align: top; width: 50%; padding: 10px }
+        .ltl-to-buchi-calculator-view canvas { border: 1px solid #000; }
+
+        @media (max-width: 767px) {
+            .ltl-to-buchi-calculator { display: block; }
+            .ltl-to-buchi-calculator-controls { display: block; width: 100%; }
+            .ltl-to-buchi-calculator-view { display: block; width: 100%; padding: 0 }
+        }
+    </style>
+</head>
+<body>
+    <h1>Калькулятор для построения автомата Бюхи по формуле LTL</h1>
+
+    <div class="ltl-to-buchi-calculator">
+        <div class="ltl-to-buchi-calculator-controls">
+            <p><label>Выражение: <input type="text" id="inputBox" value="p∨q U X(X(!p)∨q)"></label>
+            <input type="submit" onclick="calculator.Solve()" value="Построить"></p>
+            <div class="keyboard">
+                <div>
+                    <div class="btn" onclick="AppendChar('∨')">∨</div>
+                    <div class="btn" onclick="AppendChar('∧')">∧</div>
+                    <div class="btn" onclick="AppendChar('¬')">¬</div>
+                    <div class="btn" onclick="AppendChar('⊕')">⊕</div>
+                    <div class="btn" onclick="AppendChar('→')">→</div>
+                    <div class="btn" onclick="AppendChar('≡')">≡</div>
+                    <div class="btn" onclick="AppendChar('↓')">↓</div>
+                    <div class="btn" onclick="AppendChar('|')">|</div>
+                </div>
+
+                <div>
+                    <div class="btn" onclick="AppendChar('0')">0</div>
+                    <div class="btn" onclick="AppendChar('1')">1</div>
+                    <div class="btn" onclick="AppendChar('a')">a</div>
+                    <div class="btn" onclick="AppendChar('b')">b</div>
+                    <div class="btn" onclick="AppendChar('c')">c</div>
+                    <div class="btn" onclick="AppendChar('x')">x</div>
+                    <div class="btn" onclick="AppendChar('y')">y</div>
+                    <div class="btn" onclick="AppendChar('z')">z</div>
+                </div>
+
+                <div>
+                    <div class="btn" onclick="AppendChar('(')">(</div>
+                    <div class="btn" onclick="AppendChar(')')">)</div>
+                    <div class="btn" onclick="AppendChar('x1')">x1</div>
+                    <div class="btn" onclick="AppendChar('x2')">x2</div>
+                    <div class="btn" onclick="AppendChar('x3')">x3</div>
+                    <div class="btn" onclick="AppendChar('x4')">x4</div>
+                    <div class="btn" onclick="AppendChar('x5')">x5</div>
+                    <div class="btn" onclick="AppendChar('x6')">x6</div>
+                </div>
+            </div>
+            <div id="resultBox"></div>
+        </div>
+        <div id="calculator-view" class="ltl-to-buchi-calculator-view" style="display: none;">
+            <canvas id="canvas">
+        </div>
+    </div>
+
+    <script src="LTLCalculator.js"></script>
+    <script src="LTLtoBuchiCalculator.js"></script>
+
+    <script>
+        function AppendChar(c) {
+            let inputBox = document.getElementById("inputBox")
+            inputBox.focus()
+
+            let start = +inputBox.selectionStart
+            let end = inputBox.selectionEnd
+            inputBox.value = inputBox.value.substring(0, start) + c + inputBox.value.substring(end, inputBox.value.length)
+            inputBox.selectionStart = start + c.length
+            inputBox.selectionEnd = start + c.length
+        }
+
+        let inputBox = document.getElementById("inputBox")
+        let resultBox = document.getElementById("resultBox")
+        let canvas = document.getElementById("canvas")
+        let size = Math.min(800, document.getElementById("calculator-view").clientWidth)
+        let calculator = new LTLtoBuchiCalculator(inputBox, resultBox, canvas, size, size)
+        calculator.Solve()
+    </script>
+</body>
+</html>
