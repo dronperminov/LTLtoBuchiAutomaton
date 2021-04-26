@@ -1,6 +1,7 @@
 function LTLExpression(expression) {
     this.parser = new LTLParser(expression)
     this.variables = this.parser.variables
+    this.inputExpression = expression
     this.parsedExpression = this.parser.ToStringRPN(this.parser.rpn)
     this.tree = this.MakeTree(this.parser.rpn)
     this.expression = this.ToString(this.tree)
@@ -400,4 +401,73 @@ LTLExpression.prototype.IsAtomNode = function(node) {
 // является ли выражение атомом
 LTLExpression.prototype.IsAtom = function() {
     return this.IsAtomNode(this.tree)
+}
+
+// получение размера поддереа
+LTLExpression.prototype.GetSizeNode = function(node) {
+    if (node == null)
+        return 0
+
+    return 1 + this.GetSizeNode(node.arg1) + this.GetSizeNode(node.arg2)
+}
+
+// получение размеа дерева
+LTLExpression.prototype.GetSize = function() {
+    return this.GetSizeNode(this.tree)
+}
+
+// есть ли в выражении UNTIL
+LTLExpression.prototype.HaveUntilNode = function(node) {
+    if (node == null)
+        return false
+
+    if (node.value == UNTIL)
+        return true
+
+    return this.HaveUntilNode(node.arg1) || this.HaveUntilNode(node.arg2)
+}
+
+// есть ли в выражении UNTIL
+LTLExpression.prototype.HaveUntil = function() {
+    return this.HaveUntilNode(this.tree)
+}
+
+// разбиение по UNTIL
+LTLExpression.prototype.SplitByUntil = function() {
+    if (this.tree.value != UNTIL)
+        throw this.tree // TODO
+
+    let xi = new LTLExpression(this.ToString(this.tree.arg1))
+    let psi = new LTLExpression(this.ToString(this.tree.arg2))
+
+    return { xi: xi, psi: psi }
+}
+
+// замена атомного элемента
+LTLExpression.prototype.ReplaceAtomRule = function(node, rules) {
+    for (let i = 0; i < rules.length; i++)
+        if (this.IsTreesEqual(node, rules[i][0].tree))
+            return this.MakeNode(rules[i][1])
+
+    throw node
+}
+
+// формирование дерева с выполненными заменами
+LTLExpression.prototype.MakeSubstitutionTree = function(node, atomsRules) {
+    if (node == null)
+        return null
+
+    if (this.IsAtomNode(node))
+        return this.ReplaceAtomRule(node, atomsRules)
+
+    let value = node.value
+    let arg1 = this.MakeSubstitutionTree(node.arg1, atomsRules)
+    let arg2 = this.MakeSubstitutionTree(node.arg2, atomsRules)
+
+    return this.MakeNode(value, arg1, arg2)
+}
+
+// формирование дерева с выполненными заменами
+LTLExpression.prototype.GetSubstitutionTree = function(atomsRules) {
+    return this.MakeSubstitutionTree(this.tree, atomsRules)
 }
