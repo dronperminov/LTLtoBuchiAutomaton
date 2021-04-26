@@ -37,7 +37,7 @@
     <div class="ltl-to-buchi-calculator">
         <div class="ltl-to-buchi-calculator-controls">
             <p><label>Выражение: <input type="text" id="inputBox" value="(p∨q) U (p∧q)"></label>
-            <input type="submit" onclick="calculator.Solve()" value="Построить"></p>
+            <input type="submit" onclick="Solve()" value="Построить"></p>
             <div class="keyboard">
                 <div>
                     <div class="btn" onclick="AppendChar('∨')">∨</div>
@@ -74,7 +74,7 @@
             </div>
             <div id="resultBox"></div>
         </div>
-        <div id="calculator-view" class="ltl-to-buchi-calculator-view" style="display: none;">
+        <div id="calculator-view" class="ltl-to-buchi-calculator-view">
             <canvas id="canvas">
         </div>
     </div>
@@ -82,6 +82,7 @@
     <script src="LTLParser.js"></script>
     <script src="LTLExpression.js"></script>
     <script src="LTLtoBuchiCalculator.js"></script>
+    <script src="BuchiAutomatonDrawer.js"></script>
 
     <script>
         function AppendChar(c) {
@@ -95,12 +96,18 @@
             inputBox.selectionEnd = start + c.length
         }
 
+        function Solve() {
+            let automaton = calculator.Solve()
+            let drawer = new BuchiDrawer(canvas, size, size, automaton.states, automaton.transitions, automaton.initialStates, automaton.finalstates)
+            drawer.Draw()
+        }
+
         let inputBox = document.getElementById("inputBox")
         let resultBox = document.getElementById("resultBox")
         let canvas = document.getElementById("canvas")
         let size = Math.min(800, document.getElementById("calculator-view").clientWidth)
         let calculator = new LTLtoBuchiCalculator(inputBox, resultBox, canvas, size, size)
-        calculator.Solve()
+        Solve()
     </script>
 </body>
 </html>

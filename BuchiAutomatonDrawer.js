@@ -63,12 +63,22 @@ BuchiDrawer.prototype.DrawTransitions = function(radius) {
             let node1 = this.nodes[i]
             let node2 = this.nodes[this.transitions[i].states[j] - 1]
 
-            let x1 = node1.x - radius * Math.cos(node1.alpha)
-            let y1 = node1.y - radius * Math.sin(node1.alpha)
-            let x2 = node2.x - radius * Math.cos(node2.alpha)
-            let y2 = node2.y - radius * Math.sin(node2.alpha)
+            if (node1 == node2) {
+                this.ctx.lineWidth = 1
+                this.ctx.strokeStyle = '#000'
+                this.ctx.fillStyle = '#000'
+                this.ctx.beginPath()
+                this.ctx.arc(node1.x + radius * Math.cos(node1.alpha), node1.y + radius * Math.sin(node1.alpha), radius * 1.2, 0, Math.PI * 2)
+                this.ctx.stroke()
+            }
+            else {
+                let x1 = node1.x - radius * Math.cos(node1.alpha)
+                let y1 = node1.y - radius * Math.sin(node1.alpha)
+                let x2 = node2.x - radius * Math.cos(node2.alpha)
+                let y2 = node2.y - radius * Math.sin(node2.alpha)
 
-            this.DrawArrow(x1, y1, x2, y2)
+                this.DrawArrow(x1, y1, x2, y2)
+            }
         }
     }
 }
@@ -91,7 +101,7 @@ BuchiDrawer.prototype.DrawNodes = function(radius) {
 
         this.ctx.beginPath()
         this.ctx.arc(node.x, node.y, radius, 0, Math.PI * 2, 20)
-        // this.ctx.fill()
+        this.ctx.fill()
         this.ctx.stroke()
 
         this.ctx.fillStyle = '#000'
@@ -106,7 +116,6 @@ BuchiDrawer.prototype.Draw = function() {
     this.ctx.clearRect(0, 0, this.width, this.height)
 
     let radius = 25
-
     this.DrawTransitions(radius)
     this.DrawNodes(radius)
 }
