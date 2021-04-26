@@ -459,6 +459,14 @@ LTLExpression.prototype.SplitByUntil = function() {
     return { xi: xi, psi: psi }
 }
 
+// получение аргумента X
+LTLExpression.prototype.GetNextArgument = function() {
+    if (this.tree.value != NEXT)
+        throw "NOT NEXT TREE"
+
+    return new LTLExpression(this.ToString(this.tree.arg1))
+}
+
 // замена атомного элемента
 LTLExpression.prototype.ReplaceAtomRule = function(node, rules) {
     for (let i = 0; i < rules.length; i++)
