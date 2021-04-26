@@ -138,10 +138,10 @@ LTLParser.prototype.GetPriority = function(lexeme) {
     if (this.IsFunction(lexeme))
         return 9
 
-    if (lexeme == RELEASE || lexeme == UNTIL)
+    if (lexeme == NOT)
         return 8
 
-    if (lexeme == NOT)
+    if (lexeme == RELEASE || lexeme == UNTIL)
         return 7
 
     if (lexeme == AND)
