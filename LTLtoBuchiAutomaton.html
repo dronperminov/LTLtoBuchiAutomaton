@@ -11,6 +11,7 @@
         table { border-collapse: collapse; }
         td, th { border: 1px solid #000; padding: 0 5px }
         p { margin: 5px 0 5px 0; }
+        hr { margin: 0 -5px; background: #000; }
 
         #inputBox { width: 300px; }
         #variablesBox { width: 317px; }
@@ -35,7 +36,9 @@
 
     <div class="ltl-to-buchi-calculator">
         <div class="ltl-to-buchi-calculator-controls">
-            <p><label>Выражение: <input type="text" id="inputBox" value="p∨q U X(X(!p)∨q)"></label>
+            <!-- <p><label>Выражение: <input type="text" id="inputBox" value="G(p -> X(q))"></label> -->
+            <p><label>Выражение: <input type="text" id="inputBox" value="(p∨q) U (p∧q)"></label>
+            <!-- <p><label>Выражение: <input type="text" id="inputBox" value="p∨q U X(X(!p)∨q)"></label> -->
             <input type="submit" onclick="calculator.Solve()" value="Построить"></p>
             <div class="keyboard">
                 <div>
@@ -78,7 +81,8 @@
         </div>
     </div>
 
-    <script src="LTLCalculator.js"></script>
+    <script src="LTLParser.js"></script>
+    <script src="LTLExpression.js"></script>
     <script src="LTLtoBuchiCalculator.js"></script>
 
     <script>
