@@ -1,18 +1,6 @@
 function LTLtoBuchiCalculator(inputBox, resultBox, canvas, width, height) {
     this.inputBox = inputBox
     this.resultBox = resultBox
-    
-    this.canvas = canvas
-    this.width = width
-    this.height = height
-    this.canvas.width = width
-    this.canvas.height = height
-    this.ctx = this.canvas.getContext('2d')
-
-    // let calculator = this
-    // this.canvas.addEventListener('mousedown', function(e) { calculator.MouseDown(e) })
-    // this.canvas.addEventListener('mouseup', function(e) { calculator.MouseUp(e) })
-    // this.canvas.addEventListener('mousemove', function(e) { calculator.MouseMove(e) })
 }
 
 // объединение выражений в строку
@@ -192,26 +180,14 @@ LTLtoBuchiCalculator.prototype.IsInitialState = function(state, phi, isPhi) {
     return !isPhi
 }
 
-LTLtoBuchiCalculator.prototype.IsFinalState = function(state) {
-    let haveUntil = false
-
-    for (let i = 0; i < state.length; i++) {
-        if (state[i].tree.value == UNTIL) {
-            haveUntil = true
-
-            if (this.HaveInState(state[i].SplitByUntil().psi, state))
-                return true
-        }
-    }
-
-    return !haveUntil
+LTLtoBuchiCalculator.prototype.IsFinalState = function(state, until) {
+    return !this.HaveInState(until, state) || this.HaveInState(until.SplitByUntil().psi, state)
 }
 
 // олучение состояний
-LTLtoBuchiCalculator.prototype.GetStates = function(table, phi, isPhi) {
+LTLtoBuchiCalculator.prototype.GetStates = function(table, phi, isPhi, positive) {
     let states = []
     let initialStates = []
-    let finalstates = []
 
     for (let i = 0; i < table.length; i++) {
         for (let j = 0; j < table[i].length; j++) {
@@ -219,10 +195,23 @@ LTLtoBuchiCalculator.prototype.GetStates = function(table, phi, isPhi) {
 
             if (this.IsInitialState(states[states.length - 1], phi, isPhi))
                 initialStates.push(states.length)
-
-            if (this.IsFinalState(states[states.length - 1]))
-                finalstates.push(states.length)
         }
+    }
+
+    let untils = []
+    let finalstates = []
+
+    for (let i = 0; i < positive.length; i++) {
+        if (positive[i].tree.value == UNTIL) {
+            untils.push(positive[i])
+            finalstates.push([])
+        }
+    }
+
+    for (let i = 0; i < untils.length; i++) {
+        for (let j = 0; j < states.length; j++)
+            if (this.IsFinalState(states[j], untils[i]))
+                finalstates[i].push(j + 1)
     }
 
     return { states: states, initialStates: initialStates, finalstates: finalstates }
@@ -377,8 +366,6 @@ LTLtoBuchiCalculator.prototype.Solve = function() {
     console.clear()
 
     try {
-        this.ctx.clearRect(0, 0, this.width, this.height)
-
         ltl = new LTLExpression(this.inputBox.value)
 
         this.resultBox.innerHTML = "<p><b>Распаршенное выражение:</b> " + ltl.parsedExpression + "</p>"
@@ -400,9 +387,18 @@ LTLtoBuchiCalculator.prototype.Solve = function() {
         this.resultBox.appendChild(this.TableToHTML(table, ltl, subtrees.positive))
 
         let isPhi = ltl.IsEqual(subtrees.positive[subtrees.positive.length - 1])
-        let states = this.GetStates(table.temporal, ltl, isPhi)
+        let states = this.GetStates(table.temporal, ltl, isPhi, subtrees.positive)
         this.resultBox.innerHTML += "<p><b>Начальные состояния (𝑆<sub>0</sub>):</b> " + this.JoinStates(states.initialStates) + "</p>"
-        this.resultBox.innerHTML += "<p><b>Допускающие состояния (𝓕):</b> " + this.JoinStates(states.finalstates) + "</p>"
+
+        if (states.finalstates.length == 1) {
+            this.resultBox.innerHTML += "<p><b>Допускающие состояния (𝓕):</b> " + this.JoinStates(states.finalstates[0]) + "</p>"
+        }
+        else {
+            this.resultBox.innerHTML += "<p><b>Допускающие состояния (𝓕):</b> "
+            for (let i = 0; i < states.finalstates.length; i++)
+                this.resultBox.innerHTML += "F<sub>" + (i + 1) + "</sub>: {" + this.JoinStates(states.finalstates[i]) + "}<br>"
+            this.resultBox.innerHTML += "</p>"
+        }
 
         let transitions = this.GetTransitions(states.states, closure, ltl)
 
@@ -415,6 +411,8 @@ LTLtoBuchiCalculator.prototype.Solve = function() {
         }
 
         this.resultBox.innerHTML += "</p>"
+
+        return { states: states.states, initialStates: states.initialStates, finalstates: states.finalstates, transitions: transitions }
     }
     catch (error) {
         this.resultBox.innerHTML = "<p><b>Ошибка:</b> " + error + "</p>"
