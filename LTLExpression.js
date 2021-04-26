@@ -419,6 +419,11 @@ LTLExpression.prototype.IsAtom = function() {
     return this.IsAtomNode(this.tree)
 }
 
+// является ли выражение переменной
+LTLExpression.prototype.IsVariable = function() {
+    return this.parser.IsVariable(this.tree.value) && this.tree.arg1 == null && this.tree.arg2 == null
+}
+
 // получение размера поддереа
 LTLExpression.prototype.GetSizeNode = function(node) {
     if (node == null)

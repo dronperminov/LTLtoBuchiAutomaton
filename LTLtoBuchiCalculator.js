@@ -269,6 +269,16 @@ LTLtoBuchiCalculator.prototype.GetStatesForUntil = function(curr, positive, stat
     return transitionStates
 }
 
+LTLtoBuchiCalculator.prototype.GetStateVariables = function(state) {
+    variables = []
+
+    for (let i = 0; i < state.length; i++)
+        if (state[i].IsVariable())
+            variables.push(state[i])
+
+    return variables
+}
+
 // получение переходов
 LTLtoBuchiCalculator.prototype.GetTransitions = function(states, positive, phi) {
     let transitions = []
@@ -276,16 +286,17 @@ LTLtoBuchiCalculator.prototype.GetTransitions = function(states, positive, phi) 
     for (let i = 0; i < states.length; i++) {
         let transitionNext = this.GetStatesForNext(states[i], positive, states)
         let transitionUntil = this.GetStatesForUntil(states[i], positive, states)
+        let variables = this.GetStateVariables(states[i])
 
         if (transitionNext.size == 0) {
-            transitions.push(Array.from(transitionUntil))
+            transitions.push({ states: Array.from(transitionUntil), variables: variables })
         }
         else if (transitionUntil.size == 0) {
-            transitions.push(Array.from(transitionNext))
+            transitions.push({ states: Array.from(transitionNext), variables: variables })
         }
         else {
             let transition = new Set([...transitionNext].filter(x => transitionUntil.has(x)))
-            transitions.push(Array.from(transition))
+            transitions.push({ states: Array.from(transition), variables: variables })
         }
     }
 
@@ -374,8 +385,9 @@ LTLtoBuchiCalculator.prototype.Solve = function() {
     this.resultBox.innerHTML += "<p><b>Таблица переходов:</b><br>";
 
     for (let i = 0; i < transitions.length; i++) {
-
-        this.resultBox.innerHTML += "𝛿(s<sub>" + (i + 1) + "</sub>) = {" + this.JoinStates(transitions[i]) + "}<br>"
+        let x = this.JoinExpressions(transitions[i].variables, ltl)
+        let delta = this.JoinStates(transitions[i].states)
+        this.resultBox.innerHTML += "𝛿(s<sub>" + (i + 1) + "</sub>, {" + x + "}) = {" + delta + "}<br>"
     }
 
     this.resultBox.innerHTML += "</p>"
