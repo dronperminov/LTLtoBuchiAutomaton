@@ -85,11 +85,11 @@ LTLParser.prototype.InitRegExp = function() {
     let operators = Object.keys(this.operators).map(function(x) { return x.length == 1 ? "\\" + x : x }).join("|") // операции
     let functions = Object.keys(this.functions).join("|") // функции
     let constants = Object.keys(this.constants).join("|") // константы
-    let variables = "[a-z][a-z\\d]*" // переменные
+    let variables = "[a-zA-Z][a-zA-Z\\d]*" // переменные
 
-    let parts = [ number, "\\(|\\)|\\¬", operators, functions, constants, variables, ","]
+    let parts = [ "\\(|\\)|\\¬", operators, functions, constants, variables, number]
 
-    this.regexp = new RegExp(parts.join("|"), "gi")
+    this.regexp = new RegExp(parts.join("|"), "g")
 }
 
 // парсинг на лексемы с проверкой на корректность
