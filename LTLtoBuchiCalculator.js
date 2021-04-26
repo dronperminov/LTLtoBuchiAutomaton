@@ -293,7 +293,10 @@ LTLtoBuchiCalculator.prototype.GetTransitions = function(states, positive, phi) 
         let transitionUntil = this.GetStatesForUntil(states[i], positive, states)
         let variables = this.GetStateVariables(states[i])
 
-        if (transitionNext.size == 0) {
+        if (transitionNext.size == 0 && transitionUntil.size == 0) {
+            transitions.push({ states: Array.from({length: states.length}, (_, i) => i + 1), variables: variables })
+        }
+        else if (transitionNext.size == 0) {
             transitions.push({ states: Array.from(transitionUntil), variables: variables })
         }
         else if (transitionUntil.size == 0) {
@@ -373,42 +376,48 @@ LTLtoBuchiCalculator.prototype.TableToHTML = function(table, phi, positive) {
 LTLtoBuchiCalculator.prototype.Solve = function() {
     console.clear()
 
-    this.ctx.clearRect(0, 0, this.width, this.height)
+    try {
+        this.ctx.clearRect(0, 0, this.width, this.height)
 
-    ltl = new LTLExpression(this.inputBox.value)
+        ltl = new LTLExpression(this.inputBox.value)
 
-    this.resultBox.innerHTML = "<p><b>Распаршенное выражение:</b> " + ltl.parsedExpression + "</p>"
+        this.resultBox.innerHTML = "<p><b>Распаршенное выражение:</b> " + ltl.parsedExpression + "</p>"
 
-    if (ltl.expression != ltl.parsedExpression) {
-        this.resultBox.innerHTML += "<p><b>Упрощённое выражение:</b> " + ltl.expression + "</p>"
+        if (ltl.expression != ltl.parsedExpression) {
+            this.resultBox.innerHTML += "<p><b>Упрощённое выражение:</b> " + ltl.expression + "</p>"
+        }
+
+        let subtrees = ltl.GetAllSubTrees()
+        let closure = subtrees.positive.concat(subtrees.negative)
+
+        this.resultBox.innerHTML += "<p><b>Все подвыражения (без отрицания):</b> " + this.JoinExpressions(subtrees.positive, ltl) + "</p>"
+        this.resultBox.innerHTML += "<p><b>Все подвыражения (c отрицанием):</b> " + this.JoinExpressions(subtrees.negative, ltl) + "</p>"
+
+        let atoms = this.GetAtoms(subtrees.positive)
+        this.resultBox.innerHTML += "<p><b>Атомы:</b> " + this.JoinExpressions(atoms, ltl, ", ") + "</p>"
+
+        let table = this.MakeTable(atoms, closure)
+        this.resultBox.appendChild(this.TableToHTML(table, ltl, subtrees.positive))
+
+        let isPhi = ltl.IsEqual(subtrees.positive[subtrees.positive.length - 1])
+        let states = this.GetStates(table.temporal, ltl, isPhi)
+        this.resultBox.innerHTML += "<p><b>Начальные состояния (𝑆<sub>0</sub>):</b> " + this.JoinStates(states.initialStates) + "</p>"
+        this.resultBox.innerHTML += "<p><b>Допускающие состояния (𝓕):</b> " + this.JoinStates(states.finalstates) + "</p>"
+
+        let transitions = this.GetTransitions(states.states, closure, ltl)
+
+        this.resultBox.innerHTML += "<p><b>Таблица переходов:</b><br>";
+
+        for (let i = 0; i < transitions.length; i++) {
+            let x = this.JoinExpressions(transitions[i].variables, null)
+            let delta = this.JoinStates(transitions[i].states)
+            this.resultBox.innerHTML += "𝛿(s<sub>" + (i + 1) + "</sub>, {" + x + "}) = {" + delta + "}<br>"
+        }
+
+        this.resultBox.innerHTML += "</p>"
     }
-
-    let subtrees = ltl.GetAllSubTrees()
-    let closure = subtrees.positive.concat(subtrees.negative)
-
-    this.resultBox.innerHTML += "<p><b>Все подвыражения (без отрицания):</b> " + this.JoinExpressions(subtrees.positive, ltl) + "</p>"
-    this.resultBox.innerHTML += "<p><b>Все подвыражения (c отрицанием):</b> " + this.JoinExpressions(subtrees.negative, ltl) + "</p>"
-
-    let atoms = this.GetAtoms(subtrees.positive)
-    this.resultBox.innerHTML += "<p><b>Атомы:</b> " + this.JoinExpressions(atoms, ltl, ", ") + "</p>"
-
-    let table = this.MakeTable(atoms, closure)
-    this.resultBox.appendChild(this.TableToHTML(table, ltl, subtrees.positive))
-
-    let isPhi = ltl.IsEqual(subtrees.positive[subtrees.positive.length - 1])
-    let states = this.GetStates(table.temporal, ltl, isPhi)
-    this.resultBox.innerHTML += "<p><b>Начальные состояния (𝑆<sub>0</sub>):</b> " + this.JoinStates(states.initialStates) + "</p>"
-    this.resultBox.innerHTML += "<p><b>Допускающие состояния (𝓕):</b> " + this.JoinStates(states.finalstates) + "</p>"
-
-    let transitions = this.GetTransitions(states.states, closure, ltl)
-
-    this.resultBox.innerHTML += "<p><b>Таблица переходов:</b><br>";
-
-    for (let i = 0; i < transitions.length; i++) {
-        let x = this.JoinExpressions(transitions[i].variables, null)
-        let delta = this.JoinStates(transitions[i].states)
-        this.resultBox.innerHTML += "𝛿(s<sub>" + (i + 1) + "</sub>, {" + x + "}) = {" + delta + "}<br>"
+    catch (error) {
+        this.resultBox.innerHTML = "<p><b>Ошибка:</b> " + error + "</p>"
+        throw error
     }
-
-    this.resultBox.innerHTML += "</p>"
 }
