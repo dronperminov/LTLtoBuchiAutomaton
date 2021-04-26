@@ -3,7 +3,7 @@ function LTLExpression(expression) {
     this.variables = this.parser.variables
     this.parsedExpression = this.parser.ToStringRPN(this.parser.rpn)
     this.tree = this.MakeTree(this.parser.rpn)
-    this.expression = this.ToString()
+    this.expression = this.ToString(this.tree)
 }
 
 // проверка двух деревьев на эквивалентность
@@ -325,8 +325,8 @@ LTLExpression.prototype.TreeToRpn = function(tree) {
 }
 
 // перевод выражения в строку
-LTLExpression.prototype.ToString = function() {
-    let rpn = this.TreeToRpn(this.tree)
+LTLExpression.prototype.ToString = function(tree) {
+    let rpn = this.TreeToRpn(tree)
     return this.parser.ToStringRPN(rpn)
 }
 
@@ -355,4 +355,49 @@ LTLExpression.prototype.EvaluateTree = function(node, variables) {
 
 LTLExpression.prototype.Evaluate = function() {
     return this.EvaluateTree(this.tree, this.variables)
+}
+
+/****************************************************************************/
+LTLExpression.prototype.GetAllSubTreesRecursive = function(node, positive, negative) {
+    if (node == null)
+        return
+
+    this.GetAllSubTreesRecursive(node.arg1, positive, negative)
+    this.GetAllSubTreesRecursive(node.arg2, positive, negative)
+
+    if (node.value != NOT) {
+        positive.add(this.ToString(node))
+        negative.add(this.ToString(this.SimplifyTree(this.MakeNode(NOT, node))))
+    }
+}
+
+// получение всех подвыражений (с отрицаниями и без)
+LTLExpression.prototype.GetAllSubTrees = function(tree) {
+    let positive = new Set()
+    let negative = new Set()
+    this.GetAllSubTreesRecursive(this.tree, positive, negative)
+
+    let positiveExpressions = []
+    let negativeExpressions = []
+
+    for (let expression of positive.values())
+        positiveExpressions.push(new LTLExpression(expression))
+
+    for (let expression of negative.values())
+        negativeExpressions.push(new LTLExpression(expression))
+
+    return { positive: positiveExpressions, negative: negativeExpressions }
+}
+
+// является ли узел атомом
+LTLExpression.prototype.IsAtomNode = function(node) {
+    if (this.parser.IsVariable(node.value) && node.arg1 == null && node.arg2 == null)
+        return true
+
+    return node.value == NEXT && this.IsAtomNode(node.arg1)
+}
+
+// является ли выражение атомом
+LTLExpression.prototype.IsAtom = function() {
+    return this.IsAtomNode(this.tree)
 }

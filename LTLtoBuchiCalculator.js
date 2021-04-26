@@ -15,10 +15,25 @@ function LTLtoBuchiCalculator(inputBox, resultBox, canvas, width, height) {
     // this.canvas.addEventListener('mousemove', function(e) { calculator.MouseMove(e) })
 }
 
-LTLtoBuchiCalculator.prototype.GetSimplifiedExpression = function(calculator) {
-    let tree = calculator.MakeTree(calculator.rpn)
-    let rpn = calculator.TreeToRpn(tree)
-    return calculator.ToStringRPN(rpn)
+// бъединение выражений в строку
+LTLtoBuchiCalculator.prototype.JoinExpressions = function(expressions, delimeter = "<br>") {
+    let joined = []
+
+    for (let expression of expressions.values())
+        joined.push(expression.expression)
+
+    return joined.join(delimeter)
+}
+
+// получение атомов выражения
+LTLtoBuchiCalculator.prototype.GetAtoms = function(positive) {
+    let atoms = []
+
+    for (let expression of positive.values())
+        if (expression.IsAtom())
+            atoms.push(expression)
+
+    return atoms
 }
 
 LTLtoBuchiCalculator.prototype.Solve = function() {
@@ -35,15 +50,13 @@ LTLtoBuchiCalculator.prototype.Solve = function() {
         this.resultBox.innerHTML += "<p><b>Упрощённое выражение:</b> " + ltl.expression + "</p>"
     }
 
-    // let variables = Object.keys(calculator.variables)
-    // let subtrees = calculator.GetAllSubTrees()
-    // let atoms = calculator.GetAtoms(subtrees.positive)
+    let subtrees = ltl.GetAllSubTrees()
+    let atoms = this.GetAtoms(subtrees.positive)
     // let table = calculator.MakeTable(subtrees.positive, atoms)
 
-    // calculator.MakeTable(subtrees.positive, atoms)
-    // this.resultBox.innerHTML += "<p><b>Все подвыражения выражение (без отрицания):</b><br>" + subtrees.positive.join("<br>") + "</p>"
-    // this.resultBox.innerHTML += "<p><b>Все подвыражения выражение (c отрицанием):</b><br>" + subtrees.negative.join("<br>") + "</p>"
-    // this.resultBox.innerHTML += "<p><b>Атомы:</b> " + atoms.join(", ") + "</p>"
+    this.resultBox.innerHTML += "<p><b>Все подвыражения выражения (без отрицания):</b><br>" + this.JoinExpressions(subtrees.positive) + "</p>"
+    this.resultBox.innerHTML += "<p><b>Все подвыражения выражения (c отрицанием):</b><br>" + this.JoinExpressions(subtrees.negative) + "</p>"
+    this.resultBox.innerHTML += "<p><b>Атомы:</b> " + this.JoinExpressions(atoms, ", ") + "</p>"
 
     // this.resultBox.innerHTML += "<p><b>Насыщение классическими связками</b></p>"
     // this.resultBox.appendChild(table.html)
