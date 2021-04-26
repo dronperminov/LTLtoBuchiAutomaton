@@ -21,6 +21,22 @@ LTLExpression.prototype.IsTreesEqual = function(node1, node2) {
     return this.IsTreesEqual(node1.arg1, node2.arg1) && this.IsTreesEqual(node1.arg2, node2.arg2)
 }
 
+// проверка на эквивалентность
+LTLExpression.prototype.IsEqual = function(expression) {
+    return this.IsTreesEqual(this.tree, expression.tree)
+}
+
+// проверка на обратную эквивалентность
+LTLExpression.prototype.IsInverse = function(expression) {
+    if (this.IsTreesEqual(this.tree, this.MakeNode(NOT, expression.tree)))
+        return true
+
+    if (this.IsTreesEqual(this.MakeNode(NOT, this.tree), expression.tree))
+        return true
+
+    return false
+}
+
 // формирование узла дерева
 LTLExpression.prototype.MakeNode = function(value, arg1 = null, arg2 = null) {
     return {value: value, arg1: arg1, arg2: arg2}
