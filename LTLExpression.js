@@ -73,6 +73,16 @@ LTLExpression.prototype.SimplifyTemporal = function(node) {
     return node
 }
 
+LTLExpression.prototype.SimplifyTemporalOperator = function(node) {
+    if (node.value == RELEASE)
+        return this.SimplifyTree(this.MakeNode(NOT, this.MakeNode(UNTIL, this.MakeNode(NOT, node.arg1), this.MakeNode(NOT, node.arg2))))
+
+    if (node.value == WEAK_UNTIL)
+        return this.SimplifyTree(this.MakeNode(OR, this.MakeNode(UNTIL, node.arg1, node.arg2), this.MakeNode(GLOBALLY, node.arg1)))
+
+    return node
+}
+
 // упрощение дерева для отрицания
 LTLExpression.prototype.SimplifyTreeNot = function(node) {
     if (node.arg1.value == ONE )
@@ -272,6 +282,9 @@ LTLExpression.prototype.SimplifyTree = function(node) {
 
     if (!this.parser.IsOperator(node.value)) // если не оператор
         return node // то не упрощаем
+
+    if (node.value == RELEASE || node.value == WEAK_UNTIL)
+        return this.SimplifyTemporalOperator(node)
 
     if (node.value == AND)
         return this.SimplifyTreeAnd(node)

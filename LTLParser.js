@@ -8,6 +8,7 @@ const IMPL = "→"
 const EQUAL = "≡"
 const UNTIL = "U"
 const RELEASE = "R"
+const WEAK_UNTIL = "W"
 
 const NEXT = "X"
 const GLOBALLY = "G"
@@ -50,6 +51,7 @@ LTLParser.prototype.InitOperators = function() {
     this.operators[SHEFFER] = function(x, y) { return (1 - x) || (1 - y) }
     this.operators[UNTIL] = function(x, y) { throw "U called" }
     this.operators[RELEASE] = function(x, y) { throw "R called" }
+    this.operators[WEAK_UNTIL] = function(x, y) { throw "W called" }
 }
 
 // инициализация констант
@@ -82,13 +84,12 @@ LTLParser.prototype.InitReplacements = function() {
 // инициализация регулярного выражения
 LTLParser.prototype.InitRegExp = function() {
     let number = "1|0" // вещественные числа
-    let operators = Object.keys(this.operators).map(function(x) { return x.length == 1 ? "\\" + x : x }).join("|") // операции
+    let operators = Object.keys(this.operators).map(function(x) { return [UNTIL, RELEASE, WEAK_UNTIL].indexOf(x) == -1 ? "\\" + x : x }).join("|") // операции
     let functions = Object.keys(this.functions).join("|") // функции
     let constants = Object.keys(this.constants).join("|") // константы
     let variables = "[a-zA-Z][a-zA-Z\\d]*" // переменные
 
     let parts = [ "\\(|\\)|\\¬", operators, functions, constants, variables, number]
-
     this.regexp = new RegExp(parts.join("|"), "g")
 }
 

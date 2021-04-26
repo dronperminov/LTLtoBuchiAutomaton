@@ -20,6 +20,11 @@ LTLtoBuchiCalculator.prototype.JoinExpressions = function(expressions, phi, deli
     let joined = []
 
     for (let expression of expressions.values()) {
+        if (phi == null) {
+            joined.push(expression.expression)
+            continue
+        }
+
         if (expression.IsEqual(phi))
             joined.push("φ")
         else if (expression.IsInverse(phi))
@@ -303,6 +308,16 @@ LTLtoBuchiCalculator.prototype.GetTransitions = function(states, positive, phi) 
     return transitions
 }
 
+LTLtoBuchiCalculator.prototype.GetOnlyPositive = function(row, positive, phi) {
+    let result = []
+
+    for (let i = 0; i < row.length; i++)
+        if (this.HaveInState(row[i], positive) || row[i].IsEqual(phi))
+            result.push(row[i])
+
+    return result
+}
+
 // добавление в строку tr ячейки с текстом text
 LTLtoBuchiCalculator.prototype.AddCell = function(tr, text, name = "td") {
     let cell = document.createElement(name)
@@ -311,12 +326,13 @@ LTLtoBuchiCalculator.prototype.AddCell = function(tr, text, name = "td") {
 }
 
 // добавление в строку tr ячейки с текстом text
-LTLtoBuchiCalculator.prototype.AddSplittedCell = function(tr, states, stateNumber, phi) {
+LTLtoBuchiCalculator.prototype.AddSplittedCell = function(tr, states, stateNumber, phi, positive) {
     let cell = document.createElement("td")
     let html = []
 
     for (let i = 0; i < states.length; i++) {
-        html.push("s<sub>" + stateNumber[0] + "</sub> = {" + this.JoinExpressions(states[i], phi, ", ") + "}")
+        let pos = this.GetOnlyPositive(states[i], positive, phi)
+        html.push("s<sub>" + stateNumber[0] + "</sub> = {" + this.JoinExpressions(pos, phi, ", ") + "}")
         stateNumber[0]++
     }
 
@@ -324,7 +340,7 @@ LTLtoBuchiCalculator.prototype.AddSplittedCell = function(tr, states, stateNumbe
     tr.appendChild(cell)
 }
 
-LTLtoBuchiCalculator.prototype.TableToHTML = function(table, phi) {
+LTLtoBuchiCalculator.prototype.TableToHTML = function(table, phi, positive) {
     let htmlTable = document.createElement("table")
 
     let tr = document.createElement("tr")
@@ -344,8 +360,10 @@ LTLtoBuchiCalculator.prototype.TableToHTML = function(table, phi) {
         for (let j = 0; j < table.bits[i].length; j++)
             this.AddCell(tr, table.bits[i][j] ? "TRUE" : "FALSE")
 
-        this.AddCell(tr, "{" + this.JoinExpressions(table.classic[i], phi, ", ") + "}")
-        this.AddSplittedCell(tr, table.temporal[i], stateNumber, phi)
+        let classic = this.GetOnlyPositive(table.classic[i], positive, phi)
+
+        this.AddCell(tr, "{" + this.JoinExpressions(classic, null, ", ") + "}")
+        this.AddSplittedCell(tr, table.temporal[i], stateNumber, phi, positive)
         htmlTable.appendChild(tr)
     }
 
@@ -359,38 +377,38 @@ LTLtoBuchiCalculator.prototype.Solve = function() {
 
     ltl = new LTLExpression(this.inputBox.value)
 
-    this.resultBox.innerHTML += "<p><b>Распаршенное выражение:</b> " + ltl.parsedExpression + "</p>"
+    this.resultBox.innerHTML = "<p><b>Распаршенное выражение:</b> " + ltl.parsedExpression + "</p>"
 
     if (ltl.expression != ltl.parsedExpression) {
         this.resultBox.innerHTML += "<p><b>Упрощённое выражение:</b> " + ltl.expression + "</p>"
     }
 
     let subtrees = ltl.GetAllSubTrees()
-    this.resultBox.innerHTML += "<p><b>Все подвыражения (closure):</b> " + this.JoinExpressions(subtrees.positive, ltl) + "</p>"
-    // this.resultBox.innerHTML += "<p><b>Все подвыражения (c отрицанием):</b> " + this.JoinExpressions(subtrees.negative, ltl) + "</p>"
+    let closure = subtrees.positive.concat(subtrees.negative)
+
+    this.resultBox.innerHTML += "<p><b>Все подвыражения (без отрицания):</b> " + this.JoinExpressions(subtrees.positive, ltl) + "</p>"
+    this.resultBox.innerHTML += "<p><b>Все подвыражения (c отрицанием):</b> " + this.JoinExpressions(subtrees.negative, ltl) + "</p>"
 
     let atoms = this.GetAtoms(subtrees.positive)
     this.resultBox.innerHTML += "<p><b>Атомы:</b> " + this.JoinExpressions(atoms, ltl, ", ") + "</p>"
 
-    let table = this.MakeTable(atoms, subtrees.positive)
-    this.resultBox.appendChild(this.TableToHTML(table, ltl))
+    let table = this.MakeTable(atoms, closure)
+    this.resultBox.appendChild(this.TableToHTML(table, ltl, subtrees.positive))
 
     let isPhi = ltl.IsEqual(subtrees.positive[subtrees.positive.length - 1])
     let states = this.GetStates(table.temporal, ltl, isPhi)
     this.resultBox.innerHTML += "<p><b>Начальные состояния (𝑆<sub>0</sub>):</b> " + this.JoinStates(states.initialStates) + "</p>"
     this.resultBox.innerHTML += "<p><b>Допускающие состояния (𝓕):</b> " + this.JoinStates(states.finalstates) + "</p>"
 
-    let transitions = this.GetTransitions(states.states, subtrees.positive, ltl)
+    let transitions = this.GetTransitions(states.states, closure, ltl)
 
     this.resultBox.innerHTML += "<p><b>Таблица переходов:</b><br>";
 
     for (let i = 0; i < transitions.length; i++) {
-        let x = this.JoinExpressions(transitions[i].variables, ltl)
+        let x = this.JoinExpressions(transitions[i].variables, null)
         let delta = this.JoinStates(transitions[i].states)
         this.resultBox.innerHTML += "𝛿(s<sub>" + (i + 1) + "</sub>, {" + x + "}) = {" + delta + "}<br>"
     }
 
     this.resultBox.innerHTML += "</p>"
-    // this.resultBox.innerHTML += "<p><b>Насыщение классическими связками</b></p>"
-    // this.resultBox.appendChild(table.html)
 }
