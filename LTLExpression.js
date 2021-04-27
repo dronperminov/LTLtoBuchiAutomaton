@@ -47,7 +47,7 @@ LTLExpression.prototype.SimplifyTreeNext = function(node) {
     if (node.arg1.value == NOT)
         return this.MakeNode(NOT, this.MakeNode(NEXT, node.arg1.arg1))
 
-    if ([AND, OR, XOR, EQUAL, SHEFFER, PIRS].indexOf(node.arg1.value) > -1) {
+    if ([AND, OR, XOR, EQUAL, SHEFFER, PIRS, UNTIL].indexOf(node.arg1.value) > -1) {
         let arg1 = this.SimplifyTree(this.MakeNode(NEXT, node.arg1.arg1))
         let arg2 = this.SimplifyTree(this.MakeNode(NEXT, node.arg1.arg2))
         return this.MakeNode(node.arg1.value, arg1, arg2)
