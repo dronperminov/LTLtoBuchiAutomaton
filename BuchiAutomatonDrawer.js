@@ -22,6 +22,7 @@ function BuchiDrawer(canvas, width, height, states, transitions, initialStates, 
     this.prevX = -1
     this.prevY = -1
     this.activeNode = null
+    this.isPressed = false
 }
 
 BuchiDrawer.prototype.InitNodes = function() {
@@ -50,17 +51,31 @@ BuchiDrawer.prototype.InitNodes = function() {
     return nodes
 }
 
-BuchiDrawer.prototype.DrawArrow = function(x1, y1, x2, y2, size = 15, alpha = 0.3) {
+BuchiDrawer.prototype.DrawArrow = function(x1, y1, x2, y2, color = '#000', isBezier = true) {
     let dx = x2 - x1
     let dy = y2 - y1
     let phi = Math.atan2(dy, dx)
+    let size = 15
+    let alpha = 0.3
+
+    let d = 25
+    let x = x1 + dx / 2 + d * Math.sin(phi)
+    let y = y1 + dy / 2 + d * Math.cos(phi)
 
     this.ctx.lineWidth = 1
-    this.ctx.strokeStyle = '#000'
-    this.ctx.fillStyle = '#000'
+    this.ctx.strokeStyle = color
+    this.ctx.fillStyle = color
+
     this.ctx.beginPath()
-    this.ctx.moveTo(x1, y1)
-    this.ctx.lineTo(x2, y2)
+
+    if (isBezier) {
+        this.ctx.bezierCurveTo(x1, y1, x, y, x2, y2)
+    }
+    else {
+        this.ctx.moveTo(x1, y1)
+        this.ctx.lineTo(x2, y2)
+    }
+
     this.ctx.stroke()
 
     this.ctx.beginPath()
@@ -77,10 +92,19 @@ BuchiDrawer.prototype.DrawTransitions = function() {
             let node1 = this.nodes[i]
             let node2 = this.nodes[this.transitions[i].states[j] - 1]
 
+            let color = '#000'
+
+            if (node1 == this.activeNode) {
+                color = '#f00'
+            }
+            else if (node2 == this.activeNode) {
+                color = '#00f'
+            }
+
             if (node1 == node2) {
                 this.ctx.lineWidth = 1
-                this.ctx.strokeStyle = '#000'
-                this.ctx.fillStyle = '#000'
+                this.ctx.strokeStyle = color
+                this.ctx.fillStyle = color
                 this.ctx.beginPath()
                 this.ctx.arc(node1.x + node1.radius * Math.cos(node1.alpha), node1.y + node1.radius * Math.sin(node1.alpha), node1.radius * 1.2, 0, Math.PI * 2)
                 this.ctx.stroke()
@@ -91,7 +115,7 @@ BuchiDrawer.prototype.DrawTransitions = function() {
                 let x2 = node2.x - node2.radius * Math.cos(node2.alpha)
                 let y2 = node2.y - node2.radius * Math.sin(node2.alpha)
 
-                this.DrawArrow(x1, y1, x2, y2)
+                this.DrawArrow(x1, y1, x2, y2, color)
             }
         }
     }
@@ -107,10 +131,11 @@ BuchiDrawer.prototype.DrawNodes = function() {
             let y1 = node.y + 2 * node.radius * Math.sin(node.alpha)
             let y2 = node.y + node.radius * Math.sin(node.alpha)
 
-            this.DrawArrow(x1, y1, x2, y2)
+            this.DrawArrow(x1, y1, x2, y2, '#000', false)
         }
 
         this.ctx.fillStyle = '#fff'
+        this.ctx.strokeStyle = '#000'
         this.ctx.lineWidth = node.isFinal.length > 0 ? 4 : 1
 
         this.ctx.beginPath()
@@ -156,17 +181,20 @@ BuchiDrawer.prototype.GetNodeAt = function(x, y) {
 
 BuchiDrawer.prototype.MouseDown = function(e) {
     this.activeNode = this.GetNodeAt(e.offsetX, e.offsetY)
+    this.isPressed = true
     this.prevX = e.offsetX
     this.prevY = e.offsetY
+    this.Draw()
 }
 
 BuchiDrawer.prototype.MouseUp = function(e) {
-    this.activeNode = null
+    this.isPressed = false
 }
 
 BuchiDrawer.prototype.MouseMove = function(e) {
     this.canvas.style.cursor = this.GetNodeAt(e.offsetX, e.offsetY) == null ? 'default' : 'pointer'
-    if (this.activeNode == null)
+
+    if (!this.isPressed || this.activeNode == null)
         return
 
     this.activeNode.x += e.offsetX - this.prevX
