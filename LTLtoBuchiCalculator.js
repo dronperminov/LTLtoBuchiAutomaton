@@ -144,6 +144,32 @@ LTLtoBuchiCalculator.prototype.HaveInState = function(formula, state, invert = f
     return false
 }
 
+// можно ли добавить формулу в состояние
+LTLtoBuchiCalculator.prototype.CanAddFormula = function(operation, state, arg1, arg2) {
+    if (operation == OR)
+        return this.HaveInState(arg1, state) || this.HaveInState(arg2, state)
+
+    if (operation == AND)
+        return this.HaveInState(arg1, state) && this.HaveInState(arg2, state)
+
+    if (operation == IMPL)
+        return this.HaveInState(arg1, state, true) || this.HaveInState(arg2, state)
+
+    return false
+}
+
+// добавление формулы в состояние по аргументам
+LTLtoBuchiCalculator.prototype.AddFormulaByArguments = function(state, formula) {
+    if (this.HaveInState(formula, state) || !formula.IsOperator())
+        return
+
+    let args = formula.SplitByOperation()
+
+    if (this.CanAddFormula(formula.tree.value, state, args.arg1, args.arg2)) {
+        state.push(formula)
+    }
+}
+
 // формирование таблицы состояний
 LTLtoBuchiCalculator.prototype.MakeTable = function(atoms, positive) {
     let n = atoms.length
@@ -170,6 +196,12 @@ LTLtoBuchiCalculator.prototype.MakeTable = function(atoms, positive) {
                     states.splice(++k, 0, copy)
                 }
             }
+        }
+
+        for (let j = 0; j < positive.length; j++) {
+            if (positive[j].HaveUntil())
+                for (let k = 0; k < states.length; k++)
+                    this.AddFormulaByArguments(states[k], positive[j])
         }
 
         temporal.push(states)

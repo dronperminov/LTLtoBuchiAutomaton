@@ -432,6 +432,11 @@ LTLExpression.prototype.IsAtom = function() {
     return this.IsAtomNode(this.tree)
 }
 
+// является ли выражение оператцией
+LTLExpression.prototype.IsOperator = function() {
+    return this.parser.IsOperator(this.tree.value)
+}
+
 // является ли выражение переменной
 LTLExpression.prototype.IsVariable = function() {
     return this.parser.IsVariable(this.tree.value) && this.tree.arg1 == null && this.tree.arg2 == null
@@ -475,6 +480,14 @@ LTLExpression.prototype.SplitByUntil = function() {
     let psi = new LTLExpression(this.ToString(this.tree.arg2))
 
     return { xi: xi, psi: psi }
+}
+
+// разбиение по операции
+LTLExpression.prototype.SplitByOperation = function() {
+    let arg1 = new LTLExpression(this.ToString(this.tree.arg1))
+    let arg2 = new LTLExpression(this.ToString(this.tree.arg2))
+
+    return { arg1: arg1, arg2: arg2 }
 }
 
 // получение аргумента X
