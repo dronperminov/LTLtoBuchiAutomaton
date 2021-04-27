@@ -43,6 +43,17 @@ LTLtoBuchiCalculator.prototype.GetAtoms = function(positive) {
     return atoms.sort(function(a, b) { return a.GetSize() - b.GetSize() })
 }
 
+// получение выражений с UNTIL
+LTLtoBuchiCalculator.prototype.GetUntils = function(positive) {
+    let untils = []
+
+    for (let expression of positive.values())
+        if (expression.tree.value == UNTIL)
+            untils.push(expression)
+
+    return untils
+}
+
 // функция сравнения для получения последовательности бит
 LTLtoBuchiCalculator.prototype.CompareN = function(n, n1, n2) {
     let bits1 = []
@@ -214,6 +225,13 @@ LTLtoBuchiCalculator.prototype.GetStates = function(table, phi, isPhi, positive)
                 finalstates[i].push(j + 1)
     }
 
+    if (finalstates.length == 0) {
+        finalstates.push([])
+
+        for (let i = 0; i < states.length; i++)
+            finalstates[0].push(i + 1)
+    }
+
     return { states: states, initialStates: initialStates, finalstates: finalstates }
 }
 
@@ -230,6 +248,8 @@ LTLtoBuchiCalculator.prototype.GetStatesForNext = function(curr, positive, state
         for (let j = 0; j < args.length; j++) {
             if (this.HaveInState(args[j], curr) == this.HaveInState(args[j].GetNextArgument(), states[i])) {
                 transitionStates.add(i + 1)
+                si = states.indexOf(curr) + 1
+                console.log("[" + args[j].expression + " in s" + si + "] == [" + args[j].GetNextArgument().expression + " in s" + (i + 1) + "]")
             }
         }
     }
@@ -255,8 +275,11 @@ LTLtoBuchiCalculator.prototype.GetStatesForUntil = function(curr, positive, stat
             let left = this.HaveInState(args[j], curr)
             let right = this.HaveInState(psi, curr) || this.HaveInState(xi, curr) && this.HaveInState(args[j], states[i])
 
-            if (left == right)
+            if (left == right) {
                 transitionStates.add(i + 1)
+                si = states.indexOf(curr) + 1
+                console.log("[" + args[j].expression + " in s" + si + "] == [" + psi.expression + " in s" + si + " or " + xi.expression + " in s" + si + " and " + args[j].expression + " in s" + (i + 1) + "]")
+            }
         }
     }
 
@@ -278,9 +301,15 @@ LTLtoBuchiCalculator.prototype.GetTransitions = function(states, positive, phi) 
     let transitions = []
 
     for (let i = 0; i < states.length; i++) {
+        console.log("\ns" + (i + 1))
+
         let transitionNext = this.GetStatesForNext(states[i], positive, states)
         let transitionUntil = this.GetStatesForUntil(states[i], positive, states)
         let variables = this.GetStateVariables(states[i])
+
+        console.log("X states:", Array.from(transitionNext))
+        console.log("U states:", Array.from(transitionUntil))
+        console.log("Variables:", this.JoinExpressions(variables))
 
         if (transitionNext.size == 0 && transitionUntil.size == 0) {
             transitions.push({ states: Array.from({length: states.length}, (_, i) => i + 1), variables: variables })
@@ -376,12 +405,15 @@ LTLtoBuchiCalculator.prototype.Solve = function() {
 
         let subtrees = ltl.GetAllSubTrees()
         let closure = subtrees.positive.concat(subtrees.negative)
-
         this.resultBox.innerHTML += "<p><b>Все подвыражения (без отрицания):</b> " + this.JoinExpressions(subtrees.positive, ltl) + "</p>"
         this.resultBox.innerHTML += "<p><b>Все подвыражения (c отрицанием):</b> " + this.JoinExpressions(subtrees.negative, ltl) + "</p>"
 
         let atoms = this.GetAtoms(subtrees.positive)
+        let untils = this.GetUntils(subtrees.positive)
         this.resultBox.innerHTML += "<p><b>Атомы:</b> " + this.JoinExpressions(atoms, ltl, ", ") + "</p>"
+
+        if (untils.length > 0)
+            this.resultBox.innerHTML += "<p><b>Until-выражения:</b> " + this.JoinExpressions(untils, ltl) + "</p>"
 
         let table = this.MakeTable(atoms, closure)
         this.resultBox.appendChild(this.TableToHTML(table, ltl, subtrees.positive))
