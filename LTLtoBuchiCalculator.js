@@ -383,6 +383,21 @@ LTLtoBuchiCalculator.prototype.GetOnlyPositive = function(row, positive, phi) {
     return result
 }
 
+// добавление блока с возможностью проскролливания
+LTLtoBuchiCalculator.prototype.AddScollableBlock = function(html) {
+    let div = document.createElement("div")
+    div.className = "scrollable"
+
+    if (typeof html == "string") {
+        div.innerHTML = html
+    }
+    else {
+        div.appendChild(html)
+    }
+
+    return div
+}
+
 // добавление в строку tr ячейки с текстом text
 LTLtoBuchiCalculator.prototype.AddCell = function(tr, text, name = "td") {
     let cell = document.createElement(name)
@@ -460,7 +475,7 @@ LTLtoBuchiCalculator.prototype.Solve = function() {
             this.resultBox.innerHTML += "<p><b>Until-выражения:</b> " + this.JoinExpressions(untils, ltl) + "</p>"
 
         let table = this.MakeTable(atoms, closure)
-        this.resultBox.appendChild(this.TableToHTML(table, ltl, subtrees.positive))
+        this.resultBox.appendChild(this.AddScollableBlock(this.TableToHTML(table, ltl, subtrees.positive)))
 
         let isPhi = ltl.IsEqual(subtrees.positive[subtrees.positive.length - 1])
         let states = this.GetStates(table.temporal, ltl, isPhi, subtrees.positive)
@@ -470,23 +485,25 @@ LTLtoBuchiCalculator.prototype.Solve = function() {
             this.resultBox.innerHTML += "<p><b>Допускающие состояния (𝓕):</b> " + this.JoinStates(states.finalstates[0]) + "</p>"
         }
         else {
-            this.resultBox.innerHTML += "<p><b>Допускающие состояния (𝓕):</b> "
+            this.resultBox.innerHTML += "<b>Допускающие состояния (𝓕):</b> "
+            let finalstatesHTML = ""
             for (let i = 0; i < states.finalstates.length; i++)
-                this.resultBox.innerHTML += "F<sub>" + (i + 1) + "</sub>: {" + this.JoinStates(states.finalstates[i]) + "}<br>"
-            this.resultBox.innerHTML += "</p>"
+                finalstatesHTML += "F<sub>" + (i + 1) + "</sub>: {" + this.JoinStates(states.finalstates[i]) + "}<br>"
+            this.resultBox.appendChild(this.AddScollableBlock(finalstatesHTML))
         }
 
         let transitions = this.GetTransitions(states.states, closure, ltl)
 
-        this.resultBox.innerHTML += "<p><b>Таблица переходов:</b><br>";
+        this.resultBox.innerHTML += "<b>Таблица переходов:</b><br>";
+        let transitionsHTML = ""
 
         for (let i = 0; i < transitions.length; i++) {
             let x = this.JoinExpressions(transitions[i].variables, null)
             let delta = this.JoinStates(transitions[i].states)
-            this.resultBox.innerHTML += "𝛿(s<sub>" + (i + 1) + "</sub>, {" + x + "}) = {" + delta + "}<br>"
+            transitionsHTML += "𝛿(s<sub>" + (i + 1) + "</sub>, {" + x + "}) = {" + delta + "}<br>"
         }
 
-        this.resultBox.innerHTML += "</p>"
+        this.resultBox.appendChild(this.AddScollableBlock(transitionsHTML))
 
         return { states: states.states, initialStates: states.initialStates, finalstates: states.finalstates, transitions: transitions }
     }
