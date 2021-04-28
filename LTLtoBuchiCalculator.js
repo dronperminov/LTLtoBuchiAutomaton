@@ -146,14 +146,26 @@ LTLtoBuchiCalculator.prototype.HaveInState = function(formula, state, invert = f
 
 // можно ли добавить формулу в состояние
 LTLtoBuchiCalculator.prototype.CanAddFormula = function(operation, state, arg1, arg2) {
-    if (operation == OR)
-        return this.HaveInState(arg1, state) || this.HaveInState(arg2, state)
-
     if (operation == AND)
         return this.HaveInState(arg1, state) && this.HaveInState(arg2, state)
 
+    if (operation == OR)
+        return this.HaveInState(arg1, state) || this.HaveInState(arg2, state)
+
+    if (operation == XOR)
+        return this.HaveInState(arg1, state) != this.HaveInState(arg2, state)
+
+    if (operation == SHEFFER)
+        return !this.HaveInState(arg1, state) || !this.HaveInState(arg2, state)
+
+    if (operation == PIRS)
+        return !this.HaveInState(arg1, state) && !this.HaveInState(arg2, state)
+
     if (operation == IMPL)
-        return this.HaveInState(arg1, state, true) || this.HaveInState(arg2, state)
+        return !this.HaveInState(arg1, state) || this.HaveInState(arg2, state)
+
+    if (operation == EQUAL)
+        return this.HaveInState(arg1, state) == this.HaveInState(arg2, state)
 
     return false
 }
