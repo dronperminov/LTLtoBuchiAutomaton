@@ -59,6 +59,9 @@ LTLExpression.prototype.SimplifyTreeNext = function(node) {
         return this.MakeNode(OR, arg1, arg2)
     }
 
+    if (node.arg1.value == ONE || node.arg1.value == ZERO)
+        return this.MakeNode(node.arg1.value)
+
     return node
 }
 
