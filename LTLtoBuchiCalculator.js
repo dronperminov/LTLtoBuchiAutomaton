@@ -286,14 +286,22 @@ LTLtoBuchiCalculator.prototype.GetStatesForNext = function(curr, positive, state
         if (positive[i].tree.value == NEXT)
             args.push(positive[i])
 
+    if (args.length == 0)
+        return new Set()
+
     let transitionStates = new Set()
 
-    for (let i = 0; i < states.length; i++) {
-        for (let j = 0; j < args.length; j++) {
+    for (let i = 0; i < states.length; i++)
+        transitionStates.add(i + 1)
+
+    for (let j = 0; j < args.length; j++) {
+        for (let i = 0; i < states.length; i++) {
             if (this.HaveInState(args[j], curr) == this.HaveInState(args[j].GetNextArgument(), states[i])) {
-                transitionStates.add(i + 1)
                 si = states.indexOf(curr) + 1
                 console.log("[" + args[j].expression + " in s" + si + "] == [" + args[j].GetNextArgument().expression + " in s" + (i + 1) + "]")
+            }
+            else {
+                transitionStates.delete(i + 1)
             }
         }
     }
@@ -308,10 +316,16 @@ LTLtoBuchiCalculator.prototype.GetStatesForUntil = function(curr, positive, stat
         if (positive[i].tree.value == UNTIL)
             args.push(positive[i])
 
+    if (args.length == 0)
+        return new Set()
+
     let transitionStates = new Set()
 
-    for (let i = 0; i < states.length; i++) {
-        for (let j = 0; j < args.length; j++) {
+    for (let i = 0; i < states.length; i++)
+        transitionStates.add(i + 1)
+
+    for (let j = 0; j < args.length; j++) {
+        for (let i = 0; i < states.length; i++) {
             let tmp = args[j].SplitByUntil()
             let xi = tmp.xi
             let psi = tmp.psi
@@ -320,9 +334,11 @@ LTLtoBuchiCalculator.prototype.GetStatesForUntil = function(curr, positive, stat
             let right = this.HaveInState(psi, curr) || this.HaveInState(xi, curr) && this.HaveInState(args[j], states[i])
 
             if (left == right) {
-                transitionStates.add(i + 1)
                 si = states.indexOf(curr) + 1
                 console.log("[" + args[j].expression + " in s" + si + "] == [" + psi.expression + " in s" + si + " or " + xi.expression + " in s" + si + " and " + args[j].expression + " in s" + (i + 1) + "]")
+            }
+            else {
+                transitionStates.delete(i + 1)
             }
         }
     }
