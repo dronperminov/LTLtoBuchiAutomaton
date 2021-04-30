@@ -59,8 +59,9 @@ BuchiDrawer.prototype.DrawArrow = function(x1, y1, x2, y2, color = '#000', isBez
     let alpha = 0.3
 
     let d = 25
-    let x = x1 + dx / 2 + d * Math.sin(phi)
-    let y = y1 + dy / 2 + d * Math.cos(phi)
+    let sign = Math.abs(phi) < Math.PI / 2 ? 1 : -1
+    let x = x1 + dx / 2 + sign * d * Math.sin(phi)
+    let y = y1 + dy / 2 + sign * d * Math.cos(phi)
 
     this.ctx.lineWidth = 1
     this.ctx.strokeStyle = color
