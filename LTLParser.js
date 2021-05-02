@@ -229,6 +229,44 @@ LTLParser.prototype.ConvertToRPN = function() {
 
         this.rpn.push(stack.pop())
     }
+
+    this.Validate()
+}
+
+// проверка выражения на корректность
+LTLParser.prototype.Validate = function() {
+    let stackLength = 0
+
+    for (let lexeme of this.rpn.values()) {
+        if (this.IsOperator(lexeme)) {
+            if (stackLength < 2)
+                throw "Unable to evaluate operator '" + lexeme + "'"
+
+            stackLength -= 1;
+        }
+        else if (this.IsFunction(lexeme)) {
+            if (stackLength < 1)
+                throw "Unable to evaluate function '" + lexeme + "'"
+        }
+        else if (lexeme == NOT) {
+            if (stackLength < 1)
+                throw "Unable to evaluate function '" + lexeme + "'"
+        }
+        else if (this.IsConstant(lexeme)) {
+            stackLength++
+        }
+        else if (this.IsVariable(lexeme)) {
+            stackLength++
+        }
+        else if (this.IsNumber(lexeme)) {
+            stackLength++
+        }
+        else
+            throw "Unknown rpn lexeme '" + lexeme + "'"
+    }
+
+    if (stackLength != 1)
+        throw "Invalid expression"
 }
 
 // перевод выражения в польской записи в строку
