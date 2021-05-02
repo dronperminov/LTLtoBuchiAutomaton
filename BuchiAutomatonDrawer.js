@@ -13,6 +13,7 @@ function BuchiDrawer(canvas, width, height, states, transitions, initialStates, 
     this.canvas.addEventListener('mousedown', function(e) { calculator.MouseDown(e) })
     this.canvas.addEventListener('mouseup', function(e) { calculator.MouseUp(e) })
     this.canvas.addEventListener('mousemove', function(e) { calculator.MouseMove(e) })
+    this.canvas.addEventListener('mousewheel', function(e) { calculator.MouseWheel(e) })
 
     this.states = states
     this.transitions = transitions
@@ -200,9 +201,17 @@ BuchiDrawer.prototype.MouseMove = function(e) {
 
     this.activeNode.x += e.offsetX - this.prevX
     this.activeNode.y += e.offsetY - this.prevY
-    this.activeNode.alpha = Math.atan2(this.activeNode.y - this.y0, this.activeNode.x - this.x0)
 
     this.prevX = e.offsetX
     this.prevY = e.offsetY
+    this.Draw()
+}
+
+BuchiDrawer.prototype.MouseWheel = function(e) {
+    let node = this.GetNodeAt(e.offsetX, e.offsetY)
+
+    if (node != null)
+        node.alpha += Math.sign(e.deltaY) / 10
+
     this.Draw()
 }
