@@ -1,5 +1,6 @@
-function LTLtoBuchiCalculator(inputBox, resultBox, canvas, width, height) {
+function LTLtoBuchiCalculator(inputBox, orderBox, resultBox, canvas, width, height) {
     this.inputBox = inputBox
+    this.varOrderBox = varOrderBox
     this.resultBox = resultBox
 }
 
@@ -54,6 +55,10 @@ LTLtoBuchiCalculator.prototype.GetUntils = function(positive) {
     return untils
 }
 
+LTLtoBuchiCalculator.prototype.GetBit = function(v, i, n) {
+    return v >> (n - 1 - i) & 1
+}
+
 // функция сравнения для получения последовательности бит
 LTLtoBuchiCalculator.prototype.CompareN = function(n, n1, n2) {
     let bits1 = []
@@ -62,8 +67,8 @@ LTLtoBuchiCalculator.prototype.CompareN = function(n, n1, n2) {
     let onesCount2 = 0
 
     for (let i = 0; i < n; i++) {
-        bits1.push(n1 >> (n - 1 - i) & 1)
-        bits2.push(n2 >> (n - 1 - i) & 1)
+        bits1.push(this.GetBit(n1, i, n))
+        bits2.push(this.GetBit(n2, i, n))
 
         if (bits1[i] == 1)
             onesCount1++
@@ -87,7 +92,9 @@ LTLtoBuchiCalculator.prototype.GetBits = function(n) {
         values.push(i)
 
     let calculator = this
-    values.sort(function(a, b) { return calculator.CompareN(n, a, b) })
+
+    if (this.varOrderBox.value == 'ones')
+        values.sort(function(a, b) { return calculator.CompareN(n, a, b) })
 
     let bits = []
 
@@ -95,7 +102,7 @@ LTLtoBuchiCalculator.prototype.GetBits = function(n) {
         bits.push([])
 
         for (let j = 0; j < n; j++)
-            bits[i].push((values[i] >> (n - 1 - j)) & 1)
+            bits[i].push(this.GetBit(values[i], this.varOrderBox.value == 'asceding-ltr' ? j : n - 1 - j, n))
     }
 
     return bits

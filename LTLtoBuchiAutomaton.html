@@ -37,8 +37,15 @@
 
     <div class="ltl-to-buchi-calculator">
         <div class="ltl-to-buchi-calculator-controls">
-            <p><label>Выражение: <input type="text" id="inputBox" value="(p∨q) U (p∧q)"></label>
+            <p><label>Выражение: <input type="text" id="inputBox" value="(x U (y U z))"></label>
             <input type="submit" onclick="Solve()" value="Построить"></p>
+            <div>
+                <label>Порядок переменных: <select id="varOrderBox">
+                    <option value="asceding-ltr">По возрастанию (слева направо)</option>
+                    <option value="asceding-rtl">По возрастанию (справа налево)</option>
+                    <option value="ones">По единицам</option>
+                </select></label>
+            </div>
             <div class="keyboard">
                 <div>
                     <div class="btn" onclick="AppendChar('∨')">∨</div>
@@ -104,10 +111,11 @@
         }
 
         let inputBox = document.getElementById("inputBox")
+        let varOrderBox = document.getElementById("varOrderBox")
         let resultBox = document.getElementById("resultBox")
         let canvas = document.getElementById("canvas")
         let size = Math.min(800, document.getElementById("calculator-view").clientWidth)
-        let calculator = new LTLtoBuchiCalculator(inputBox, resultBox, canvas, size, size)
+        let calculator = new LTLtoBuchiCalculator(inputBox, varOrderBox, resultBox, canvas, size, size)
         Solve()
     </script>
 </body>
