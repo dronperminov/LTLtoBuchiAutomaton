@@ -211,6 +211,8 @@ LTLtoBuchiCalculator.prototype.MakeTable = function(atoms, positive) {
                 }
                 else if (this.HaveInState(untilArgs.xi, states[k])) {
                     let copy = Array.from(states[k])
+                    // console.log(positive[j])
+                    states[k].push(positive[j].Inverse())
                     copy.push(positive[j])
                     states.splice(++k, 0, copy)
                 }

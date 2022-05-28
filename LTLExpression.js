@@ -7,6 +7,10 @@ function LTLExpression(expression) {
     this.expression = this.ToString(this.tree)
 }
 
+LTLExpression.prototype.Inverse = function() {
+    return new LTLExpression(`${NOT}(${this.expression})`)
+}
+
 // проверка двух деревьев на эквивалентность
 LTLExpression.prototype.IsTreesEqual = function(node1, node2) {
     if (node1 == null && node2 == null)
@@ -45,7 +49,7 @@ LTLExpression.prototype.MakeNode = function(value, arg1 = null, arg2 = null) {
 // упрощение дерева для оператора X
 LTLExpression.prototype.SimplifyTreeNext = function(node) {
     if (node.arg1.value == NOT)
-        return this.MakeNode(NOT, this.MakeNode(NEXT, node.arg1.arg1))
+        return this.MakeNode(NOT, this.SimplifyTree(this.MakeNode(NEXT, node.arg1.arg1)))
 
     if ([AND, OR, XOR, EQUAL, SHEFFER, PIRS, UNTIL].indexOf(node.arg1.value) > -1) {
         let arg1 = this.SimplifyTree(this.MakeNode(NEXT, node.arg1.arg1))
